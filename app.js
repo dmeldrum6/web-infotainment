@@ -301,6 +301,12 @@ class InfotainmentApp {
             const channels = await channelsResponse.json();
             const streams = await streamsResponse.json();
 
+            console.log(`Loaded ${channels.length} channels and ${streams.length} streams`);
+
+            // Debug: Log first channel and stream to see structure
+            if (channels.length > 0) console.log('Sample channel:', channels[0]);
+            if (streams.length > 0) console.log('Sample stream:', streams[0]);
+
             // Create a map of channels by ID for quick lookup
             const channelMap = new Map();
             channels.forEach(channel => {
@@ -311,17 +317,15 @@ class InfotainmentApp {
             const mergedChannels = [];
             streams.forEach(stream => {
                 const channel = channelMap.get(stream.channel);
-                if (channel && stream.url && stream.status === 'online' &&
+                if (channel && stream.url &&
                     (stream.url.endsWith('.m3u8') || stream.url.includes('m3u8'))) {
 
-                    // Extract country from broadcast_area if available
-                    const country = channel.country ||
-                        (channel.broadcast_area && channel.broadcast_area.length > 0 ?
-                            channel.broadcast_area[0] : 'Unknown');
+                    // Extract country (ISO code)
+                    const country = channel.country || 'Unknown';
 
-                    // Extract primary category
+                    // Extract primary category from categories array
                     const category = channel.categories && channel.categories.length > 0 ?
-                        channel.categories[0] : 'General';
+                        channel.categories[0] : 'general';
 
                     mergedChannels.push({
                         id: channel.id,
@@ -335,6 +339,8 @@ class InfotainmentApp {
                 }
             });
 
+            console.log(`Merged ${mergedChannels.length} channels with streams`);
+
             // Limit to first 300 channels for performance
             this.iptvChannels = mergedChannels.slice(0, 300);
 
@@ -343,6 +349,8 @@ class InfotainmentApp {
                 if (channel.country) this.iptvCountries.add(channel.country);
                 if (channel.category) this.iptvCategories.add(channel.category);
             });
+
+            console.log(`Countries: ${this.iptvCountries.size}, Categories: ${this.iptvCategories.size}`);
 
             this.populateIPTVCountryFilter();
             this.populateIPTVCategoryFilter();
