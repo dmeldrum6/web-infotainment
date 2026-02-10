@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Infotainment System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header with Fullscreen Toggle -->
+        <header class="app-header">
+            <h1>Infotainment System</h1>
+            <button id="fullscreen-toggle" class="fullscreen-btn" title="Toggle Fullscreen">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-page="music">Music</button>
+            <button class="nav-tab" data-page="iptv">IPTV</button>
+            <button class="nav-tab" data-page="books">Books</button>
+            <button class="nav-tab" data-page="games">Games</button>
+            <button class="nav-tab" data-page="maps">Maps</button>
+            <button class="nav-tab" data-page="weather">Weather</button>
+        </nav>
+
+        <!-- Page Content -->
+        <main class="content-area">
+            <!-- Music Page -->
+            <div id="music-page" class="page active">
+                <div class="page-header">
+                    <h2>Internet Radio</h2>
+                    <div class="search-controls">
+                        <input type="text" id="radio-search" placeholder="Search radio stations..." class="search-input">
+                        <select id="country-filter" class="filter-select">
+                            <option value="">All Countries</option>
+                        </select>
+                        <select id="tag-filter" class="filter-select">
+                            <option value="">All Genres</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="radio-stations" class="station-grid">
+                    <div class="loading">Loading radio stations...</div>
+                </div>
+                <audio id="radio-player" preload="none"></audio>
+                <div id="now-playing" class="now-playing hidden">
+                    <div class="now-playing-info">
+                        <img id="station-logo" src="" alt="Station Logo" class="station-logo">
+                        <div class="station-details">
+                            <h3 id="station-name"></h3>
+                            <p id="station-country"></p>
+                        </div>
+                    </div>
+                    <div class="playback-controls">
+                        <button id="play-pause-btn" class="control-btn">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                                <path id="play-icon" d="M8 5v14l11-7z"/>
+                                <path id="pause-icon" class="hidden" d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                            </svg>
+                        </button>
+                        <button id="stop-btn" class="control-btn">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 6h12v12H6z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="volume-control">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                        </svg>
+                        <input type="range" id="volume-slider" min="0" max="100" value="70" class="volume-slider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- IPTV Page -->
+            <div id="iptv-page" class="page">
+                <div class="page-header">
+                    <h2>Live TV Channels</h2>
+                    <div class="search-controls">
+                        <input type="text" id="iptv-search" placeholder="Search channels..." class="search-input">
+                        <select id="iptv-country-filter" class="filter-select">
+                            <option value="">All Countries</option>
+                        </select>
+                        <select id="iptv-category-filter" class="filter-select">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="iptv-channels" class="channel-grid">
+                    <div class="loading">Loading TV channels...</div>
+                </div>
+                <div id="video-player-container" class="video-player-container hidden">
+                    <button id="close-player" class="close-player-btn">×</button>
+                    <video id="iptv-player" controls autoplay></video>
+                    <div class="channel-info">
+                        <h3 id="channel-name"></h3>
+                        <p id="channel-country"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Books Page (Placeholder) -->
+            <div id="books-page" class="page">
+                <div class="placeholder-content">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <h2>Books</h2>
+                    <p>E-books and audiobooks coming soon...</p>
+                </div>
+            </div>
+
+            <!-- Games Page (Placeholder) -->
+            <div id="games-page" class="page">
+                <div class="placeholder-content">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M6 12h4m2 0h4M8 8v8m8-4a4 4 0 0 0-8 0 4 4 0 0 0 8 0z"></path>
+                        <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                    </svg>
+                    <h2>Games</h2>
+                    <p>Gaming entertainment coming soon...</p>
+                </div>
+            </div>
+
+            <!-- Maps Page (Placeholder) -->
+            <div id="maps-page" class="page">
+                <div class="placeholder-content">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <h2>Maps & Navigation</h2>
+                    <p>GPS navigation coming soon...</p>
+                </div>
+            </div>
+
+            <!-- Weather Page (Placeholder) -->
+            <div id="weather-page" class="page">
+                <div class="placeholder-content">
+                    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                    </svg>
+                    <h2>Weather</h2>
+                    <p>Weather forecast coming soon...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
