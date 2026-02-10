@@ -117,7 +117,7 @@ class InfotainmentApp {
         container.innerHTML = '<div class="loading">Loading radio stations...</div>';
 
         try {
-            const response = await fetch('https://de1.api.radio-browser.info/json/stations/topvote/50');
+            const response = await fetch('https://de1.api.radio-browser.info/json/stations/topvote/500');
             const stations = await response.json();
 
             this.radioStations = stations.filter(station =>
@@ -159,7 +159,7 @@ class InfotainmentApp {
         const tagFilter = document.getElementById('tag-filter');
         const sortedTags = Array.from(this.tags).sort();
 
-        sortedTags.slice(0, 50).forEach(tag => {
+        sortedTags.forEach(tag => {
             const option = document.createElement('option');
             option.value = tag;
             option.textContent = tag;
@@ -292,15 +292,53 @@ class InfotainmentApp {
         container.innerHTML = '<div class="loading">Loading TV channels...</div>';
 
         try {
-            const response = await fetch('https://iptv-org.github.io/api/streams.json');
-            const channels = await response.json();
+            // Fetch both channels metadata and streams
+            const [channelsResponse, streamsResponse] = await Promise.all([
+                fetch('https://iptv-org.github.io/api/channels.json'),
+                fetch('https://iptv-org.github.io/api/streams.json')
+            ]);
 
-            this.iptvChannels = channels.filter(channel =>
-                channel.url &&
-                channel.status === 'online' &&
-                (channel.url.endsWith('.m3u8') || channel.url.includes('m3u8'))
-            ).slice(0, 200);
+            const channels = await channelsResponse.json();
+            const streams = await streamsResponse.json();
 
+            // Create a map of channels by ID for quick lookup
+            const channelMap = new Map();
+            channels.forEach(channel => {
+                channelMap.set(channel.id, channel);
+            });
+
+            // Merge stream data with channel metadata
+            const mergedChannels = [];
+            streams.forEach(stream => {
+                const channel = channelMap.get(stream.channel);
+                if (channel && stream.url && stream.status === 'online' &&
+                    (stream.url.endsWith('.m3u8') || stream.url.includes('m3u8'))) {
+
+                    // Extract country from broadcast_area if available
+                    const country = channel.country ||
+                        (channel.broadcast_area && channel.broadcast_area.length > 0 ?
+                            channel.broadcast_area[0] : 'Unknown');
+
+                    // Extract primary category
+                    const category = channel.categories && channel.categories.length > 0 ?
+                        channel.categories[0] : 'General';
+
+                    mergedChannels.push({
+                        id: channel.id,
+                        name: stream.title || channel.name,
+                        country: country,
+                        category: category,
+                        network: channel.network || '',
+                        url: stream.url,
+                        website: channel.website || ''
+                    });
+                }
+            });
+
+            // Limit to first 300 channels for performance
+            this.iptvChannels = mergedChannels.slice(0, 300);
+
+            // Populate filters
             this.iptvChannels.forEach(channel => {
                 if (channel.country) this.iptvCountries.add(channel.country);
                 if (channel.category) this.iptvCategories.add(channel.category);
