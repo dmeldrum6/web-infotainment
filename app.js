@@ -11,6 +11,7 @@ class InfotainmentApp {
         this.tags = new Set();
         this.iptvCountries = new Set();
         this.iptvCategories = new Set();
+        this.weatherLoaded = false;
 
         this.init();
     }
@@ -56,6 +57,10 @@ class InfotainmentApp {
         }
         if (pageName !== 'iptv') {
             this.closeIPTVPlayer();
+        }
+        if (pageName === 'weather' && !this.weatherLoaded) {
+            this.weatherLoaded = true;
+            this.loadWeather();
         }
     }
 
@@ -460,6 +465,109 @@ class InfotainmentApp {
         playerContainer.classList.add('hidden');
         this.iptvPlayer.pause();
         this.iptvPlayer.src = '';
+    }
+
+    // Weather Page
+    async loadWeather() {
+        const content = document.getElementById('weather-content');
+        const locationEl = document.getElementById('weather-location');
+        content.innerHTML = '<div class="loading">Detecting your location...</div>';
+
+        try {
+            // Step 1: Get location from IP address
+            const geoResponse = await fetch('https://ipapi.co/json/');
+            if (!geoResponse.ok) throw new Error('Could not detect location');
+            const geo = await geoResponse.json();
+
+            const lat = geo.latitude;
+            const lon = geo.longitude;
+            const city = geo.city || '';
+            const region = geo.region || '';
+            locationEl.textContent = city && region ? `${city}, ${region}` : `${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+
+            content.innerHTML = '<div class="loading">Loading weather data...</div>';
+
+            // Step 2: Get NWS grid point for this location
+            const pointsResponse = await fetch(`https://api.weather.gov/points/${lat},${lon}`, {
+                headers: { 'User-Agent': 'WebInfotainment' }
+            });
+            if (!pointsResponse.ok) throw new Error('NWS does not cover this location');
+            const points = await pointsResponse.json();
+
+            const forecastUrl = points.properties.forecast;
+            const nwsCity = points.properties.relativeLocation?.properties?.city;
+            const nwsState = points.properties.relativeLocation?.properties?.state;
+            if (nwsCity && nwsState) {
+                locationEl.textContent = `${nwsCity}, ${nwsState}`;
+            }
+
+            // Step 3: Fetch the forecast
+            const forecastResponse = await fetch(forecastUrl, {
+                headers: { 'User-Agent': 'WebInfotainment' }
+            });
+            if (!forecastResponse.ok) throw new Error('Could not load forecast');
+            const forecast = await forecastResponse.json();
+
+            this.displayWeather(forecast.properties.periods);
+        } catch (error) {
+            console.error('Weather error:', error);
+            content.innerHTML = `
+                <div class="weather-error">
+                    <p>${this.escapeHtml(error.message || 'Unable to load weather data.')}</p>
+                    <p>The NWS API only covers US locations.</p>
+                    <button class="weather-retry-btn" id="weather-retry">Retry</button>
+                </div>
+            `;
+            document.getElementById('weather-retry').addEventListener('click', () => {
+                this.loadWeather();
+            });
+        }
+    }
+
+    displayWeather(periods) {
+        const content = document.getElementById('weather-content');
+        if (!periods || periods.length === 0) {
+            content.innerHTML = '<div class="loading">No forecast data available.</div>';
+            return;
+        }
+
+        const current = periods[0];
+
+        // Build current weather section
+        let html = `
+            <div class="weather-current">
+                <div class="weather-current-icon">
+                    <img src="${this.escapeHtml(current.icon)}" alt="${this.escapeHtml(current.shortForecast)}">
+                </div>
+                <div class="weather-current-info">
+                    <div class="weather-current-temp">${current.temperature}&deg;${this.escapeHtml(current.temperatureUnit)}</div>
+                    <div class="weather-current-desc">${this.escapeHtml(current.name)} &mdash; ${this.escapeHtml(current.shortForecast)}</div>
+                    <div class="weather-current-details">
+                        <span>Wind: ${this.escapeHtml(current.windSpeed)} ${this.escapeHtml(current.windDirection)}</span>
+                    </div>
+                    <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.95rem;">${this.escapeHtml(current.detailedForecast)}</p>
+                </div>
+            </div>
+        `;
+
+        // Build forecast grid (remaining periods)
+        html += '<div class="weather-forecast-grid">';
+        for (let i = 1; i < periods.length; i++) {
+            const period = periods[i];
+            const nightClass = period.isDaytime ? '' : ' night';
+            html += `
+                <div class="weather-forecast-card${nightClass}">
+                    <h4>${this.escapeHtml(period.name)}</h4>
+                    <img src="${this.escapeHtml(period.icon)}" alt="${this.escapeHtml(period.shortForecast)}">
+                    <div class="forecast-temp">${period.temperature}&deg;${this.escapeHtml(period.temperatureUnit)}</div>
+                    <div class="forecast-desc">${this.escapeHtml(period.shortForecast)}</div>
+                    <div class="forecast-wind">${this.escapeHtml(period.windSpeed)} ${this.escapeHtml(period.windDirection)}</div>
+                </div>
+            `;
+        }
+        html += '</div>';
+
+        content.innerHTML = html;
     }
 
     // Utility
