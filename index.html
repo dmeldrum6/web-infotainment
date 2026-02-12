@@ -108,7 +108,32 @@
 
             <!-- Books Page -->
             <div id="books-page" class="page">
-                <iframe src="https://www.gutenberg.org/" class="embedded-iframe" title="Project Gutenberg"></iframe>
+                <div class="page-header">
+                    <h2>Project Gutenberg Books</h2>
+                    <div class="search-controls">
+                        <input type="text" id="books-search" placeholder="Search books by title or author..." class="search-input">
+                        <select id="books-language-filter" class="filter-select">
+                            <option value="">All Languages</option>
+                        </select>
+                        <select id="books-topic-filter" class="filter-select">
+                            <option value="">All Topics</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="books-grid" class="books-grid">
+                    <div class="loading">Loading books...</div>
+                </div>
+                <div class="pagination-controls" id="books-pagination">
+                    <button id="books-prev-btn" class="pagination-btn" disabled>Previous</button>
+                    <span id="books-page-info" class="page-info"></span>
+                    <button id="books-next-btn" class="pagination-btn">Next</button>
+                </div>
+                <div id="book-modal" class="modal hidden">
+                    <div class="modal-content">
+                        <button class="modal-close" id="close-book-modal">×</button>
+                        <div id="book-details"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Games Page (Placeholder) -->
