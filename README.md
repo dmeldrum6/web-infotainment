@@ -1,11 +1,11 @@
 # Infotainment System
 
-A touch-friendly, fullscreen infotainment web application built with HTML, CSS, and Vanilla JavaScript. Features internet radio streaming and live IPTV channels with an intuitive interface designed for in-vehicle or kiosk use.
+A touch-friendly, fullscreen infotainment web application built with HTML, CSS, and Vanilla JavaScript. Features internet radio streaming, live IPTV channels, an e-book library, browser-based games, and weather forecasts — all with an intuitive interface designed for in-vehicle or kiosk use.
 
 ## Features
 
 ### Music/Radio Page
-- Browse top 50 internet radio stations from around the world
+- Browse top 500 internet radio stations from around the world
 - Search stations by name or tags
 - Filter by country and genre
 - Full playback controls (play, pause, stop)
@@ -20,11 +20,24 @@ A touch-friendly, fullscreen infotainment web application built with HTML, CSS, 
 - Full-screen video player
 - Powered by [IPTV-org API](https://github.com/iptv-org/api)
 
-### Additional Pages (Placeholders)
-- Books - E-books and audiobooks (coming soon)
-- Games - Gaming entertainment (coming soon)
-- Maps - GPS navigation (coming soon)
-- Weather - Weather forecast (coming soon)
+### Books Page
+- Browse e-books from Project Gutenberg
+- Search by title or author
+- Filter by language and topic/subject
+- Pagination for browsing large result sets
+- Book detail modal with cover image, author info, and metadata
+- Download links in multiple formats (HTML, EPUB, MOBI, PDF, TXT)
+- Powered by [Gutendex API](https://gutendex.com/)
+
+### Games Page
+- **Sudoku**: Three difficulty levels (Easy, Medium, Hard), algorithm-generated puzzles, number pad input, validation checking with error highlighting
+- **Match-3**: 8x8 gem-swapping puzzle game with chain reactions, gravity physics, score tracking, and smooth cascade animations
+
+### Weather Page
+- Automatic location detection via IP geolocation
+- Current conditions with temperature, weather icon, and wind details
+- 14-day forecast grid with day/night distinction
+- Powered by the [National Weather Service API](https://www.weather.gov/documentation/services-web-api) (US locations)
 
 ## User Interface
 
@@ -94,6 +107,24 @@ Then navigate to `http://localhost:8000`
 3. Click on any channel card to start streaming
 4. Click the X button to close the video player
 
+### Books
+1. Click on the "Books" tab
+2. Browse e-books or search by title/author
+3. Use language and topic filters to narrow results
+4. Click on a book card to view details and download links
+5. Navigate pages with Previous/Next buttons
+
+### Games
+1. Click on the "Games" tab
+2. Choose Sudoku or Match-3
+3. **Sudoku**: Select a difficulty, tap a cell, and enter numbers via the number pad. Use "Check" to validate your progress
+4. **Match-3**: Swap adjacent gems to form rows or columns of three or more matching colors
+
+### Weather
+1. Click on the "Weather" tab
+2. Location is detected automatically
+3. View current conditions and a 14-day forecast
+
 ### Fullscreen Mode
 - Click the fullscreen icon in the top-right corner
 - Press ESC to exit fullscreen mode
@@ -103,11 +134,22 @@ Then navigate to `http://localhost:8000`
 ### APIs Used
 
 1. **Radio Browser API** (`https://api.radio-browser.info/`)
-   - Endpoint: `/json/stations/topvote/50` - Top 50 stations by votes
+   - Endpoint: `/json/stations/topvote/500` - Top 500 stations by votes
    - Endpoint: `/json/url/{stationuuid}` - Track station clicks
 
 2. **IPTV-org API** (`https://iptv-org.github.io/api/`)
-   - Endpoint: `/streams.json` - List of live TV streams
+   - Endpoint: `/channels.json` - Channel metadata
+   - Endpoint: `/streams.json` - Live TV streams (HLS)
+
+3. **Gutendex API** (`https://gutendex.com/`)
+   - Endpoint: `/books/` - Browse and search Project Gutenberg e-books
+
+4. **IP Geolocation API** (`https://ipapi.co/`)
+   - Endpoint: `/json/` - Detect user location by IP
+
+5. **National Weather Service API** (`https://api.weather.gov/`)
+   - Endpoint: `/points/{lat},{lon}` - Get forecast grid
+   - Endpoint: `/gridpoints/{office}/{x},{y}/forecast` - 14-day forecast
 
 ### File Structure
 ```
@@ -115,7 +157,8 @@ web-infotainment/
 ├── index.html      # Main HTML structure
 ├── styles.css      # Styling and responsive design
 ├── app.js          # Application logic and API integration
-└── README.md       # Documentation
+├── README.md       # Documentation
+└── LICENSE         # MIT License
 ```
 
 ### Browser Compatibility
@@ -151,13 +194,10 @@ Note: Some IPTV streams may not work in all browsers due to codec support. HLS (
 - Some streams may be geo-restricted
 - Network speed affects streaming quality
 - Browser codec support varies for different stream formats
+- Weather forecasts are limited to US locations (National Weather Service API)
 
 ## Future Enhancements
 
-- Books: Integrate with e-book and audiobook APIs
-- Games: Browser-based games and entertainment
-- Maps: GPS navigation with mapping APIs
-- Weather: Real-time weather information
 - Settings: Customize theme, default volume, favorites
 - Favorites: Save favorite stations and channels
 - Recent: Track recently played content
@@ -174,3 +214,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - [Radio Browser](https://www.radio-browser.info/) for the internet radio database
 - [IPTV-org](https://github.com/iptv-org) for the TV channel database
+- [Project Gutenberg](https://www.gutenberg.org/) and [Gutendex](https://gutendex.com/) for the e-book library
+- [National Weather Service](https://www.weather.gov/) for weather data
