@@ -1,6 +1,8 @@
 # Infotainment System
 
-A touch-friendly, fullscreen infotainment web application built with HTML, CSS, and Vanilla JavaScript. Features internet radio streaming, live IPTV channels, an e-book library, browser-based games, and weather forecasts — all with an intuitive interface designed for in-vehicle or kiosk use.
+A touch-friendly, fullscreen infotainment web application built with HTML, CSS, and Vanilla JavaScript. Features internet radio streaming, live IPTV channels, an e-book library, browser-based games, and weather forecasts.
+
+<img width="1919" height="801" alt="image" src="https://github.com/user-attachments/assets/214b8816-80b2-4c72-88fe-bdf23c2f89e0" />
 
 ## Features
 
@@ -196,19 +198,9 @@ Note: Some IPTV streams may not work in all browsers due to codec support. HLS (
 - Browser codec support varies for different stream formats
 - Weather forecasts are limited to US locations (National Weather Service API)
 
-## Future Enhancements
-
-- Settings: Customize theme, default volume, favorites
-- Favorites: Save favorite stations and channels
-- Recent: Track recently played content
-
 ## License
 
 MIT License - see LICENSE file for details
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Acknowledgments
 
