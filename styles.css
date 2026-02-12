@@ -1371,22 +1371,11 @@ body {
 }
 
 .match3-cell.matched {
-    animation: gemPop 0.3s ease forwards;
+    animation: gemPop 0.25s ease forwards;
 }
 
 @keyframes gemPop {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.3); opacity: 0.5; }
-    100% { transform: scale(0); opacity: 0; }
-}
-
-.match3-cell.dropping {
-    animation: gemDrop 0.3s ease;
-}
-
-@keyframes gemDrop {
-    from { transform: translateY(-100%); opacity: 0.5; }
-    to { transform: translateY(0); opacity: 1; }
+    to { transform: scale(0.6); opacity: 0; }
 }
 
 @media (max-width: 768px) {
