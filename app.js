@@ -12,6 +12,16 @@ class InfotainmentApp {
         this.iptvCountries = new Set();
         this.iptvCategories = new Set();
         this.weatherLoaded = false;
+        this.booksData = {
+            books: [],
+            currentPage: 1,
+            nextUrl: null,
+            prevUrl: null,
+            totalCount: 0,
+            languages: new Set(),
+            topics: new Set()
+        };
+        this.booksLoaded = false;
 
         this.init();
     }
@@ -21,6 +31,7 @@ class InfotainmentApp {
         this.setupFullscreen();
         this.setupMusicPage();
         this.setupIPTVPage();
+        this.setupBooksPage();
         this.loadRadioStations();
         this.loadIPTVChannels();
     }
@@ -61,6 +72,10 @@ class InfotainmentApp {
         if (pageName === 'weather' && !this.weatherLoaded) {
             this.weatherLoaded = true;
             this.loadWeather();
+        }
+        if (pageName === 'books' && !this.booksLoaded) {
+            this.booksLoaded = true;
+            this.loadBooks();
         }
     }
 
@@ -465,6 +480,307 @@ class InfotainmentApp {
         playerContainer.classList.add('hidden');
         this.iptvPlayer.pause();
         this.iptvPlayer.src = '';
+    }
+
+    // Books Page
+    setupBooksPage() {
+        const searchInput = document.getElementById('books-search');
+        const languageFilter = document.getElementById('books-language-filter');
+        const topicFilter = document.getElementById('books-topic-filter');
+        const prevBtn = document.getElementById('books-prev-btn');
+        const nextBtn = document.getElementById('books-next-btn');
+        const closeModalBtn = document.getElementById('close-book-modal');
+
+        let searchTimeout;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => this.searchBooks(), 500);
+        });
+
+        languageFilter.addEventListener('change', () => this.searchBooks());
+        topicFilter.addEventListener('change', () => this.searchBooks());
+        prevBtn.addEventListener('click', () => this.loadBooksPage(this.booksData.prevUrl));
+        nextBtn.addEventListener('click', () => this.loadBooksPage(this.booksData.nextUrl));
+        closeModalBtn.addEventListener('click', () => this.closeBookModal());
+
+        const modal = document.getElementById('book-modal');
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeBookModal();
+            }
+        });
+    }
+
+    async loadBooks(url = 'https://gutendex.com/books') {
+        const container = document.getElementById('books-grid');
+        container.innerHTML = '<div class="loading">Loading books...</div>';
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            this.booksData.books = data.results || [];
+            this.booksData.nextUrl = data.next;
+            this.booksData.prevUrl = data.previous;
+            this.booksData.totalCount = data.count || 0;
+
+            // Extract unique languages and topics for filters
+            this.booksData.books.forEach(book => {
+                if (book.languages) {
+                    book.languages.forEach(lang => this.booksData.languages.add(lang));
+                }
+                if (book.bookshelves) {
+                    book.bookshelves.forEach(shelf => this.booksData.topics.add(shelf));
+                }
+                if (book.subjects) {
+                    book.subjects.forEach(subject => {
+                        const topic = subject.split('--')[0].trim();
+                        this.booksData.topics.add(topic);
+                    });
+                }
+            });
+
+            this.populateBooksLanguageFilter();
+            this.populateBooksTopicFilter();
+            this.displayBooks(this.booksData.books);
+            this.updatePaginationControls();
+        } catch (error) {
+            container.innerHTML = '<div class="loading">Failed to load books. Please try again later.</div>';
+            console.error('Error loading books:', error);
+        }
+    }
+
+    async loadBooksPage(url) {
+        if (!url) return;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        await this.loadBooks(url);
+    }
+
+    populateBooksLanguageFilter() {
+        const languageFilter = document.getElementById('books-language-filter');
+        const currentValue = languageFilter.value;
+
+        // Only populate if empty
+        if (languageFilter.options.length <= 1) {
+            const languageNames = {
+                'en': 'English',
+                'fr': 'French',
+                'de': 'German',
+                'es': 'Spanish',
+                'it': 'Italian',
+                'pt': 'Portuguese',
+                'nl': 'Dutch',
+                'fi': 'Finnish',
+                'sv': 'Swedish',
+                'da': 'Danish',
+                'no': 'Norwegian',
+                'la': 'Latin',
+                'el': 'Greek',
+                'zh': 'Chinese',
+                'ja': 'Japanese'
+            };
+
+            const sortedLanguages = Array.from(this.booksData.languages).sort();
+
+            sortedLanguages.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang;
+                option.textContent = languageNames[lang] || lang.toUpperCase();
+                languageFilter.appendChild(option);
+            });
+        }
+
+        languageFilter.value = currentValue;
+    }
+
+    populateBooksTopicFilter() {
+        const topicFilter = document.getElementById('books-topic-filter');
+        const currentValue = topicFilter.value;
+
+        // Only populate if empty
+        if (topicFilter.options.length <= 1) {
+            const sortedTopics = Array.from(this.booksData.topics)
+                .sort()
+                .slice(0, 50); // Limit to top 50 topics
+
+            sortedTopics.forEach(topic => {
+                const option = document.createElement('option');
+                option.value = topic;
+                option.textContent = topic;
+                topicFilter.appendChild(option);
+            });
+        }
+
+        topicFilter.value = currentValue;
+    }
+
+    searchBooks() {
+        const searchTerm = document.getElementById('books-search').value.trim();
+        const language = document.getElementById('books-language-filter').value;
+        const topic = document.getElementById('books-topic-filter').value;
+
+        let url = 'https://gutendex.com/books?';
+        const params = [];
+
+        if (searchTerm) {
+            params.push(`search=${encodeURIComponent(searchTerm)}`);
+        }
+        if (language) {
+            params.push(`languages=${language}`);
+        }
+        if (topic) {
+            params.push(`topic=${encodeURIComponent(topic)}`);
+        }
+
+        url += params.join('&');
+        this.loadBooks(url);
+    }
+
+    displayBooks(books) {
+        const container = document.getElementById('books-grid');
+
+        if (books.length === 0) {
+            container.innerHTML = '<div class="loading">No books found.</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        books.forEach(book => {
+            const card = this.createBookCard(book);
+            container.appendChild(card);
+        });
+    }
+
+    createBookCard(book) {
+        const card = document.createElement('div');
+        card.className = 'book-card';
+
+        const author = book.authors && book.authors.length > 0 ?
+            book.authors[0].name : 'Unknown Author';
+
+        const coverUrl = book.formats['image/jpeg'] || '';
+        const coverHtml = coverUrl ?
+            `<img src="${this.escapeHtml(coverUrl)}" alt="Book cover">` :
+            `<div class="book-cover-placeholder">📚</div>`;
+
+        const languages = book.languages && book.languages.length > 0 ?
+            book.languages.map(lang =>
+                `<span class="book-lang-tag">${this.escapeHtml(lang)}</span>`
+            ).join('') : '';
+
+        card.innerHTML = `
+            <div class="book-cover">${coverHtml}</div>
+            <h3>${this.escapeHtml(book.title)}</h3>
+            <div class="book-author">${this.escapeHtml(author)}</div>
+            <div class="book-languages">${languages}</div>
+            <div class="book-downloads">📥 ${book.download_count || 0} downloads</div>
+        `;
+
+        card.addEventListener('click', () => this.showBookDetails(book));
+
+        return card;
+    }
+
+    showBookDetails(book) {
+        const modal = document.getElementById('book-modal');
+        const details = document.getElementById('book-details');
+
+        const authors = book.authors && book.authors.length > 0 ?
+            book.authors.map(a => `${a.name}${a.birth_year ? ` (${a.birth_year}-${a.death_year || '?'})` : ''}`).join(', ') :
+            'Unknown Author';
+
+        const coverUrl = book.formats['image/jpeg'] || '';
+        const coverHtml = coverUrl ?
+            `<img src="${this.escapeHtml(coverUrl)}" alt="Book cover">` :
+            `<div class="book-cover-placeholder" style="font-size: 5rem;">📚</div>`;
+
+        const subjects = book.subjects && book.subjects.length > 0 ?
+            book.subjects.slice(0, 10).map(subject =>
+                `<span class="book-subject-tag">${this.escapeHtml(subject)}</span>`
+            ).join('') : '';
+
+        const bookshelves = book.bookshelves && book.bookshelves.length > 0 ?
+            book.bookshelves.map(shelf =>
+                `<span class="book-subject-tag">${this.escapeHtml(shelf)}</span>`
+            ).join('') : '';
+
+        // Prepare download links
+        const downloadLinks = [];
+
+        if (book.formats['text/html']) {
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['text/html'])}" target="_blank" class="download-btn read-online">Read Online (HTML)</a>`);
+        }
+        if (book.formats['application/epub+zip']) {
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/epub+zip'])}" target="_blank" class="download-btn">Download EPUB</a>`);
+        }
+        if (book.formats['application/x-mobipocket-ebook']) {
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/x-mobipocket-ebook'])}" target="_blank" class="download-btn">Download MOBI</a>`);
+        }
+        if (book.formats['application/pdf']) {
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/pdf'])}" target="_blank" class="download-btn">Download PDF</a>`);
+        }
+        if (book.formats['text/plain']) {
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['text/plain'])}" target="_blank" class="download-btn">Download TXT</a>`);
+        }
+
+        details.innerHTML = `
+            <div class="book-detail-header">
+                <div class="book-detail-cover">${coverHtml}</div>
+                <div class="book-detail-info">
+                    <h2>${this.escapeHtml(book.title)}</h2>
+                    <div class="book-detail-author">${this.escapeHtml(authors)}</div>
+                    <div class="book-detail-meta">
+                        <div class="book-detail-meta-item">
+                            <strong>Languages:</strong>
+                            <span>${book.languages ? book.languages.join(', ').toUpperCase() : 'Unknown'}</span>
+                        </div>
+                        <div class="book-detail-meta-item">
+                            <strong>Downloads:</strong>
+                            <span>${book.download_count || 0}</span>
+                        </div>
+                        ${book.copyright !== null ? `
+                        <div class="book-detail-meta-item">
+                            <strong>Copyright:</strong>
+                            <span>${book.copyright ? 'Yes' : 'Public Domain'}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+            ${subjects || bookshelves ? `
+            <div class="book-subjects">
+                ${subjects}
+                ${bookshelves}
+            </div>
+            ` : ''}
+            ${downloadLinks.length > 0 ? `
+            <div class="book-download-links">
+                <h3>Read or Download</h3>
+                ${downloadLinks.join('')}
+            </div>
+            ` : ''}
+        `;
+
+        modal.classList.remove('hidden');
+    }
+
+    closeBookModal() {
+        const modal = document.getElementById('book-modal');
+        modal.classList.add('hidden');
+    }
+
+    updatePaginationControls() {
+        const prevBtn = document.getElementById('books-prev-btn');
+        const nextBtn = document.getElementById('books-next-btn');
+        const pageInfo = document.getElementById('books-page-info');
+
+        prevBtn.disabled = !this.booksData.prevUrl;
+        nextBtn.disabled = !this.booksData.nextUrl;
+
+        const currentStart = this.booksData.prevUrl ?
+            (parseInt(new URL(this.booksData.prevUrl).searchParams.get('page') || '1') + 1) : 1;
+
+        pageInfo.textContent = `Page ${currentStart}`;
     }
 
     // Weather Page
