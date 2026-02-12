@@ -23,6 +23,23 @@ class InfotainmentApp {
         };
         this.booksLoaded = false;
 
+        // Games state
+        this.sudoku = {
+            board: [],
+            solution: [],
+            given: [],
+            selectedCell: null
+        };
+        this.match3 = {
+            board: [],
+            selectedCell: null,
+            score: 0,
+            cols: 8,
+            rows: 8,
+            colors: ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'],
+            animating: false
+        };
+
         this.init();
     }
 
@@ -32,6 +49,7 @@ class InfotainmentApp {
         this.setupMusicPage();
         this.setupIPTVPage();
         this.setupBooksPage();
+        this.setupGamesPage();
         this.loadRadioStations();
         this.loadIPTVChannels();
     }
@@ -884,6 +902,415 @@ class InfotainmentApp {
         html += '</div>';
 
         content.innerHTML = html;
+    }
+
+    // Games Page
+    setupGamesPage() {
+        // Game selection cards
+        document.querySelectorAll('.game-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const game = card.dataset.game;
+                this.openGame(game);
+            });
+        });
+
+        // Sudoku controls
+        document.getElementById('sudoku-back').addEventListener('click', () => this.closeGame());
+        document.getElementById('sudoku-new').addEventListener('click', () => this.newSudoku());
+        document.getElementById('sudoku-check').addEventListener('click', () => this.checkSudoku());
+        document.getElementById('sudoku-numpad').addEventListener('click', (e) => {
+            const btn = e.target.closest('.numpad-btn');
+            if (btn) this.sudokuInput(parseInt(btn.dataset.num));
+        });
+
+        // Match 3 controls
+        document.getElementById('match3-back').addEventListener('click', () => this.closeGame());
+        document.getElementById('match3-new').addEventListener('click', () => this.newMatch3());
+    }
+
+    openGame(game) {
+        document.getElementById('games-menu').classList.add('hidden');
+        if (game === 'sudoku') {
+            document.getElementById('sudoku-game').classList.remove('hidden');
+            if (this.sudoku.board.length === 0) this.newSudoku();
+        } else if (game === 'match3') {
+            document.getElementById('match3-game').classList.remove('hidden');
+            if (this.match3.board.length === 0) this.newMatch3();
+        }
+    }
+
+    closeGame() {
+        document.getElementById('sudoku-game').classList.add('hidden');
+        document.getElementById('match3-game').classList.add('hidden');
+        document.getElementById('games-menu').classList.remove('hidden');
+    }
+
+    // --- Sudoku ---
+    newSudoku() {
+        const difficulty = document.getElementById('sudoku-difficulty').value;
+        const removals = { easy: 36, medium: 46, hard: 54 };
+        this.sudoku.solution = this.generateSudokuSolution();
+        this.sudoku.board = this.sudoku.solution.map(row => [...row]);
+        this.sudoku.given = Array.from({ length: 9 }, () => Array(9).fill(false));
+        this.sudoku.selectedCell = null;
+
+        // Remove cells
+        let toRemove = removals[difficulty] || 46;
+        const cells = [];
+        for (let r = 0; r < 9; r++)
+            for (let c = 0; c < 9; c++)
+                cells.push([r, c]);
+        this.shuffleArray(cells);
+        for (let i = 0; i < toRemove && i < cells.length; i++) {
+            const [r, c] = cells[i];
+            this.sudoku.board[r][c] = 0;
+        }
+
+        // Mark given cells
+        for (let r = 0; r < 9; r++)
+            for (let c = 0; c < 9; c++)
+                this.sudoku.given[r][c] = this.sudoku.board[r][c] !== 0;
+
+        document.getElementById('sudoku-message').textContent = '';
+        document.getElementById('sudoku-message').className = 'game-message';
+        this.renderSudoku();
+    }
+
+    generateSudokuSolution() {
+        const board = Array.from({ length: 9 }, () => Array(9).fill(0));
+        this.fillSudokuBoard(board);
+        return board;
+    }
+
+    fillSudokuBoard(board) {
+        const empty = this.findEmptySudokuCell(board);
+        if (!empty) return true;
+        const [row, col] = empty;
+        const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        this.shuffleArray(nums);
+        for (const num of nums) {
+            if (this.isValidSudokuPlacement(board, row, col, num)) {
+                board[row][col] = num;
+                if (this.fillSudokuBoard(board)) return true;
+                board[row][col] = 0;
+            }
+        }
+        return false;
+    }
+
+    findEmptySudokuCell(board) {
+        for (let r = 0; r < 9; r++)
+            for (let c = 0; c < 9; c++)
+                if (board[r][c] === 0) return [r, c];
+        return null;
+    }
+
+    isValidSudokuPlacement(board, row, col, num) {
+        for (let c = 0; c < 9; c++)
+            if (board[row][c] === num) return false;
+        for (let r = 0; r < 9; r++)
+            if (board[r][col] === num) return false;
+        const boxR = Math.floor(row / 3) * 3;
+        const boxC = Math.floor(col / 3) * 3;
+        for (let r = boxR; r < boxR + 3; r++)
+            for (let c = boxC; c < boxC + 3; c++)
+                if (board[r][c] === num) return false;
+        return true;
+    }
+
+    renderSudoku() {
+        const container = document.getElementById('sudoku-board');
+        container.innerHTML = '';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'sudoku-cell';
+                if (this.sudoku.given[r][c]) {
+                    cell.classList.add('given');
+                } else if (this.sudoku.board[r][c] !== 0) {
+                    cell.classList.add('user-input');
+                }
+                if (this.sudoku.selectedCell &&
+                    this.sudoku.selectedCell[0] === r && this.sudoku.selectedCell[1] === c) {
+                    cell.classList.add('selected');
+                } else if (this.sudoku.selectedCell) {
+                    const [sr, sc] = this.sudoku.selectedCell;
+                    if (sr === r || sc === c ||
+                        (Math.floor(sr / 3) === Math.floor(r / 3) &&
+                         Math.floor(sc / 3) === Math.floor(c / 3))) {
+                        cell.classList.add('highlighted');
+                    }
+                }
+                cell.textContent = this.sudoku.board[r][c] || '';
+                cell.addEventListener('click', () => this.selectSudokuCell(r, c));
+                container.appendChild(cell);
+            }
+        }
+    }
+
+    selectSudokuCell(row, col) {
+        if (this.sudoku.given[row][col]) {
+            this.sudoku.selectedCell = [row, col];
+        } else {
+            this.sudoku.selectedCell = [row, col];
+        }
+        this.renderSudoku();
+    }
+
+    sudokuInput(num) {
+        if (!this.sudoku.selectedCell) return;
+        const [r, c] = this.sudoku.selectedCell;
+        if (this.sudoku.given[r][c]) return;
+        this.sudoku.board[r][c] = num === 0 ? 0 : num;
+        this.renderSudoku();
+    }
+
+    checkSudoku() {
+        const msgEl = document.getElementById('sudoku-message');
+        let hasEmpty = false;
+        let hasError = false;
+
+        // Clear previous error highlights
+        const cells = document.querySelectorAll('.sudoku-cell');
+
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (this.sudoku.board[r][c] === 0) {
+                    hasEmpty = true;
+                } else if (this.sudoku.board[r][c] !== this.sudoku.solution[r][c]) {
+                    hasError = true;
+                    const idx = r * 9 + c;
+                    if (cells[idx]) cells[idx].classList.add('error');
+                }
+            }
+        }
+
+        if (hasError) {
+            msgEl.textContent = 'Some numbers are incorrect!';
+            msgEl.className = 'game-message error';
+        } else if (hasEmpty) {
+            msgEl.textContent = 'Looking good so far! Keep going.';
+            msgEl.className = 'game-message';
+        } else {
+            msgEl.textContent = 'Congratulations! Puzzle solved!';
+            msgEl.className = 'game-message success';
+        }
+    }
+
+    // --- Match 3 ---
+    newMatch3() {
+        this.match3.score = 0;
+        this.match3.selectedCell = null;
+        this.match3.animating = false;
+        document.getElementById('match3-score').textContent = '0';
+        document.getElementById('match3-message').textContent = '';
+        document.getElementById('match3-message').className = 'game-message';
+        this.match3.board = [];
+        const { rows, cols, colors } = this.match3;
+        for (let r = 0; r < rows; r++) {
+            this.match3.board[r] = [];
+            for (let c = 0; c < cols; c++) {
+                this.match3.board[r][c] = this.randomMatch3Color();
+            }
+        }
+        // Remove initial matches
+        let safety = 0;
+        while (this.findMatch3Matches().length > 0 && safety < 100) {
+            const matches = this.findMatch3Matches();
+            for (const [r, c] of matches) {
+                this.match3.board[r][c] = this.randomMatch3Color();
+            }
+            safety++;
+        }
+        this.renderMatch3();
+    }
+
+    randomMatch3Color() {
+        const { colors } = this.match3;
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    renderMatch3() {
+        const container = document.getElementById('match3-board');
+        container.innerHTML = '';
+        const { rows, cols, board } = this.match3;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'match3-cell';
+                cell.style.backgroundColor = board[r][c];
+                if (this.match3.selectedCell &&
+                    this.match3.selectedCell[0] === r &&
+                    this.match3.selectedCell[1] === c) {
+                    cell.classList.add('selected');
+                }
+                cell.addEventListener('click', () => this.match3Click(r, c));
+                container.appendChild(cell);
+            }
+        }
+    }
+
+    match3Click(row, col) {
+        if (this.match3.animating) return;
+
+        if (!this.match3.selectedCell) {
+            this.match3.selectedCell = [row, col];
+            this.renderMatch3();
+            return;
+        }
+
+        const [sr, sc] = this.match3.selectedCell;
+        if (sr === row && sc === col) {
+            this.match3.selectedCell = null;
+            this.renderMatch3();
+            return;
+        }
+
+        // Check adjacency
+        const dr = Math.abs(sr - row);
+        const dc = Math.abs(sc - col);
+        if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+            this.match3Swap(sr, sc, row, col);
+        } else {
+            this.match3.selectedCell = [row, col];
+            this.renderMatch3();
+        }
+    }
+
+    async match3Swap(r1, c1, r2, c2) {
+        this.match3.animating = true;
+        this.match3.selectedCell = null;
+        const { board } = this.match3;
+
+        // Swap
+        [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+        this.renderMatch3();
+
+        const matches = this.findMatch3Matches();
+        if (matches.length === 0) {
+            // Swap back
+            await this.delay(200);
+            [board[r1][c1], board[r2][c2]] = [board[r2][c2], board[r1][c1]];
+            this.renderMatch3();
+            this.match3.animating = false;
+            return;
+        }
+
+        await this.match3ResolveMatches();
+        this.match3.animating = false;
+    }
+
+    async match3ResolveMatches() {
+        let matches = this.findMatch3Matches();
+        while (matches.length > 0) {
+            // Score
+            this.match3.score += matches.length * 10;
+            document.getElementById('match3-score').textContent = this.match3.score;
+
+            // Animate matched cells
+            const container = document.getElementById('match3-board');
+            const cells = container.children;
+            const { cols } = this.match3;
+            for (const [r, c] of matches) {
+                const idx = r * cols + c;
+                if (cells[idx]) cells[idx].classList.add('matched');
+            }
+            await this.delay(300);
+
+            // Remove matches
+            for (const [r, c] of matches) {
+                this.match3.board[r][c] = null;
+            }
+
+            // Drop tiles
+            this.match3DropTiles();
+            this.match3FillEmpty();
+            this.renderMatch3();
+
+            // Animate drops
+            const newCells = container.children;
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < this.match3.rows; r++) {
+                    const idx = r * cols + c;
+                    if (newCells[idx]) newCells[idx].classList.add('dropping');
+                }
+            }
+            await this.delay(300);
+
+            matches = this.findMatch3Matches();
+        }
+    }
+
+    findMatch3Matches() {
+        const { rows, cols, board } = this.match3;
+        const matched = new Set();
+
+        // Horizontal
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols - 2; c++) {
+                const color = board[r][c];
+                if (color && board[r][c + 1] === color && board[r][c + 2] === color) {
+                    let end = c + 2;
+                    while (end + 1 < cols && board[r][end + 1] === color) end++;
+                    for (let i = c; i <= end; i++) matched.add(`${r},${i}`);
+                }
+            }
+        }
+
+        // Vertical
+        for (let c = 0; c < cols; c++) {
+            for (let r = 0; r < rows - 2; r++) {
+                const color = board[r][c];
+                if (color && board[r + 1][c] === color && board[r + 2][c] === color) {
+                    let end = r + 2;
+                    while (end + 1 < rows && board[end + 1][c] === color) end++;
+                    for (let i = r; i <= end; i++) matched.add(`${i},${c}`);
+                }
+            }
+        }
+
+        return Array.from(matched).map(s => s.split(',').map(Number));
+    }
+
+    match3DropTiles() {
+        const { rows, cols, board } = this.match3;
+        for (let c = 0; c < cols; c++) {
+            let writeRow = rows - 1;
+            for (let r = rows - 1; r >= 0; r--) {
+                if (board[r][c] !== null) {
+                    board[writeRow][c] = board[r][c];
+                    if (writeRow !== r) board[r][c] = null;
+                    writeRow--;
+                }
+            }
+            for (let r = writeRow; r >= 0; r--) {
+                board[r][c] = null;
+            }
+        }
+    }
+
+    match3FillEmpty() {
+        const { rows, cols, board } = this.match3;
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (board[r][c] === null) {
+                    board[r][c] = this.randomMatch3Color();
+                }
+            }
+        }
+    }
+
+    // Utility helpers for games
+    shuffleArray(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     // Utility
