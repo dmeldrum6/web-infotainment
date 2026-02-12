@@ -680,6 +680,14 @@ body {
     }
 }
 
+/* Embedded Iframe */
+.embedded-iframe {
+    width: 100%;
+    height: calc(100vh - 280px);
+    border: none;
+    border-radius: 8px;
+}
+
 /* Fullscreen Mode Adjustments */
 :fullscreen .app-container,
 :-webkit-full-screen .app-container,
