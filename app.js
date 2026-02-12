@@ -1215,27 +1215,47 @@ class InfotainmentApp {
                 const idx = r * cols + c;
                 if (cells[idx]) cells[idx].classList.add('matched');
             }
-            await this.delay(300);
+            await this.delay(250);
 
             // Remove matches
             for (const [r, c] of matches) {
                 this.match3.board[r][c] = null;
             }
 
-            // Drop tiles
-            this.match3DropTiles();
-            this.match3FillEmpty();
+            // Drop tiles and fill empty spaces
+            const drops = this.match3DropTiles();
+            const filled = this.match3FillEmpty();
             this.renderMatch3();
 
-            // Animate drops
+            // Animate only cells that actually moved or were newly filled
             const newCells = container.children;
-            for (let c = 0; c < cols; c++) {
-                for (let r = 0; r < this.match3.rows; r++) {
-                    const idx = r * cols + c;
-                    if (newCells[idx]) newCells[idx].classList.add('dropping');
+            const animated = [];
+            for (const [key, distance] of drops) {
+                const [r, c] = key.split(',').map(Number);
+                const idx = r * cols + c;
+                if (newCells[idx]) {
+                    newCells[idx].style.transition = 'none';
+                    newCells[idx].style.transform = `translateY(calc(${-distance * 100}% - ${distance * 4}px))`;
+                    animated.push(newCells[idx]);
                 }
             }
-            await this.delay(300);
+            for (const [key, distance] of filled) {
+                const [r, c] = key.split(',').map(Number);
+                const idx = r * cols + c;
+                if (newCells[idx]) {
+                    newCells[idx].style.transition = 'none';
+                    newCells[idx].style.transform = `translateY(calc(${-distance * 100}% - ${distance * 4}px))`;
+                    animated.push(newCells[idx]);
+                }
+            }
+
+            // Force reflow then animate to final position
+            void container.offsetHeight;
+            for (const cell of animated) {
+                cell.style.transition = 'transform 0.3s ease-out';
+                cell.style.transform = '';
+            }
+            await this.delay(350);
 
             matches = this.findMatch3Matches();
         }
@@ -1274,12 +1294,16 @@ class InfotainmentApp {
 
     match3DropTiles() {
         const { rows, cols, board } = this.match3;
+        const drops = new Map();
         for (let c = 0; c < cols; c++) {
             let writeRow = rows - 1;
             for (let r = rows - 1; r >= 0; r--) {
                 if (board[r][c] !== null) {
-                    board[writeRow][c] = board[r][c];
-                    if (writeRow !== r) board[r][c] = null;
+                    if (writeRow !== r) {
+                        board[writeRow][c] = board[r][c];
+                        board[r][c] = null;
+                        drops.set(`${writeRow},${c}`, writeRow - r);
+                    }
                     writeRow--;
                 }
             }
@@ -1287,17 +1311,21 @@ class InfotainmentApp {
                 board[r][c] = null;
             }
         }
+        return drops;
     }
 
     match3FillEmpty() {
         const { rows, cols, board } = this.match3;
+        const filled = new Map();
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
                 if (board[r][c] === null) {
                     board[r][c] = this.randomMatch3Color();
+                    filled.set(`${r},${c}`, r + 1);
                 }
             }
         }
+        return filled;
     }
 
     // Utility helpers for games
