@@ -2,7 +2,7 @@
 
 A touch-friendly, fullscreen infotainment web application built with HTML, CSS, and Vanilla JavaScript. Features internet radio streaming, live IPTV channels, an e-book library, browser-based games, and weather forecasts.
 
-<img width="1919" height="801" alt="image" src="https://github.com/user-attachments/assets/214b8816-80b2-4c72-88fe-bdf23c2f89e0" />
+<img width="1917" height="903" alt="image" src="https://github.com/user-attachments/assets/4c65fac1-5cd6-4c49-9ba4-bfcb4af8f606" />
 
 ## Features
 
