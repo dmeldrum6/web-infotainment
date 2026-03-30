@@ -13,7 +13,7 @@
         <!-- Header with Fullscreen Toggle -->
         <header class="app-header">
             <h1>Infotainment System</h1>
-            <button id="fullscreen-toggle" class="fullscreen-btn" title="Toggle Fullscreen">
+            <button id="fullscreen-toggle" class="fullscreen-btn" title="Toggle Fullscreen" aria-label="Toggle fullscreen">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
                 </svg>
@@ -58,13 +58,13 @@
                         </div>
                     </div>
                     <div class="playback-controls">
-                        <button id="play-pause-btn" class="control-btn">
+                        <button id="play-pause-btn" class="control-btn" aria-label="Play">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
                                 <path id="play-icon" d="M8 5v14l11-7z"/>
                                 <path id="pause-icon" class="hidden" d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
                             </svg>
                         </button>
-                        <button id="stop-btn" class="control-btn">
+                        <button id="stop-btn" class="control-btn" aria-label="Stop">
                             <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M6 6h12v12H6z"/>
                             </svg>
@@ -97,7 +97,7 @@
                     <div class="loading">Loading TV channels...</div>
                 </div>
                 <div id="video-player-container" class="video-player-container hidden">
-                    <button id="close-player" class="close-player-btn">×</button>
+                    <button id="close-player" class="close-player-btn" aria-label="Close player">×</button>
                     <video id="iptv-player" controls autoplay></video>
                     <div class="channel-info">
                         <h3 id="channel-name"></h3>
@@ -130,7 +130,7 @@
                 </div>
                 <div id="book-modal" class="modal hidden">
                     <div class="modal-content">
-                        <button class="modal-close" id="close-book-modal">×</button>
+                        <button class="modal-close" id="close-book-modal" aria-label="Close">×</button>
                         <div id="book-details"></div>
                     </div>
                 </div>
