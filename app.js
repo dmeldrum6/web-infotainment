@@ -176,13 +176,20 @@ class InfotainmentApp {
             this.populateTagFilter();
             this.displayRadioStations(this.radioStations);
         } catch (error) {
-            container.innerHTML = '<div class="loading">Failed to load radio stations. Please try again later.</div>';
+            container.innerHTML = `
+                <div class="error-state">
+                    <p>Failed to load radio stations.</p>
+                    <button class="weather-retry-btn" id="radio-retry">Retry</button>
+                </div>
+            `;
+            document.getElementById('radio-retry').addEventListener('click', () => this.loadRadioStations());
             console.error('Error loading radio stations:', error);
         }
     }
 
     populateCountryFilter() {
         const countryFilter = document.getElementById('country-filter');
+        if (countryFilter.options.length > 1) return;
         const sortedCountries = Array.from(this.countries).sort();
 
         sortedCountries.forEach(country => {
@@ -195,6 +202,7 @@ class InfotainmentApp {
 
     populateTagFilter() {
         const tagFilter = document.getElementById('tag-filter');
+        if (tagFilter.options.length > 1) return;
         const sortedTags = Array.from(this.tags).sort();
 
         sortedTags.forEach(tag => {
@@ -293,15 +301,18 @@ class InfotainmentApp {
     }
 
     updatePlayPauseButton(isPlaying) {
+        const btn = document.getElementById('play-pause-btn');
         const playIcon = document.getElementById('play-icon');
         const pauseIcon = document.getElementById('pause-icon');
 
         if (isPlaying) {
             playIcon.classList.add('hidden');
             pauseIcon.classList.remove('hidden');
+            btn.setAttribute('aria-label', 'Pause');
         } else {
             playIcon.classList.remove('hidden');
             pauseIcon.classList.add('hidden');
+            btn.setAttribute('aria-label', 'Play');
         }
     }
 
@@ -394,13 +405,20 @@ class InfotainmentApp {
             this.populateIPTVCategoryFilter();
             this.displayIPTVChannels(this.iptvChannels);
         } catch (error) {
-            container.innerHTML = '<div class="loading">Failed to load TV channels. Please try again later.</div>';
+            container.innerHTML = `
+                <div class="error-state">
+                    <p>Failed to load TV channels.</p>
+                    <button class="weather-retry-btn" id="iptv-retry">Retry</button>
+                </div>
+            `;
+            document.getElementById('iptv-retry').addEventListener('click', () => this.loadIPTVChannels());
             console.error('Error loading IPTV channels:', error);
         }
     }
 
     populateIPTVCountryFilter() {
         const countryFilter = document.getElementById('iptv-country-filter');
+        if (countryFilter.options.length > 1) return;
         const sortedCountries = Array.from(this.iptvCountries).sort();
 
         sortedCountries.forEach(country => {
@@ -413,6 +431,7 @@ class InfotainmentApp {
 
     populateIPTVCategoryFilter() {
         const categoryFilter = document.getElementById('iptv-category-filter');
+        if (categoryFilter.options.length > 1) return;
         const sortedCategories = Array.from(this.iptvCategories).sort();
 
         sortedCategories.forEach(category => {
@@ -488,8 +507,13 @@ class InfotainmentApp {
 
         this.iptvPlayer.play().catch(error => {
             console.error('Error playing channel:', error);
-            alert('Unable to play this channel. It may be offline or not compatible with your browser.');
             this.closeIPTVPlayer();
+            const container = document.getElementById('iptv-channels');
+            const errorBanner = document.createElement('div');
+            errorBanner.className = 'error-state';
+            errorBanner.innerHTML = `<p>Unable to play <strong>${this.escapeHtml(channel.name)}</strong>. It may be offline or unsupported by your browser.</p>`;
+            container.prepend(errorBanner);
+            setTimeout(() => errorBanner.remove(), 5000);
         });
     }
 
@@ -563,7 +587,13 @@ class InfotainmentApp {
             this.displayBooks(this.booksData.books);
             this.updatePaginationControls();
         } catch (error) {
-            container.innerHTML = '<div class="loading">Failed to load books. Please try again later.</div>';
+            container.innerHTML = `
+                <div class="error-state">
+                    <p>Failed to load books.</p>
+                    <button class="weather-retry-btn" id="books-retry">Retry</button>
+                </div>
+            `;
+            document.getElementById('books-retry').addEventListener('click', () => this.loadBooks(url));
             console.error('Error loading books:', error);
         }
     }
@@ -726,19 +756,19 @@ class InfotainmentApp {
         const downloadLinks = [];
 
         if (book.formats['text/html']) {
-            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['text/html'])}" target="_blank" class="download-btn read-online">Read Online (HTML)</a>`);
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['text/html'])}" target="_blank" rel="noopener noreferrer" class="download-btn read-online">Read Online (HTML)</a>`);
         }
         if (book.formats['application/epub+zip']) {
-            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/epub+zip'])}" target="_blank" class="download-btn">Download EPUB</a>`);
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/epub+zip'])}" target="_blank" rel="noopener noreferrer" class="download-btn">Download EPUB</a>`);
         }
         if (book.formats['application/x-mobipocket-ebook']) {
-            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/x-mobipocket-ebook'])}" target="_blank" class="download-btn">Download MOBI</a>`);
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/x-mobipocket-ebook'])}" target="_blank" rel="noopener noreferrer" class="download-btn">Download MOBI</a>`);
         }
         if (book.formats['application/pdf']) {
-            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/pdf'])}" target="_blank" class="download-btn">Download PDF</a>`);
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['application/pdf'])}" target="_blank" rel="noopener noreferrer" class="download-btn">Download PDF</a>`);
         }
         if (book.formats['text/plain']) {
-            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['text/plain'])}" target="_blank" class="download-btn">Download TXT</a>`);
+            downloadLinks.push(`<a href="${this.escapeHtml(book.formats['text/plain'])}" target="_blank" rel="noopener noreferrer" class="download-btn">Download TXT</a>`);
         }
 
         details.innerHTML = `
@@ -1049,11 +1079,7 @@ class InfotainmentApp {
     }
 
     selectSudokuCell(row, col) {
-        if (this.sudoku.given[row][col]) {
-            this.sudoku.selectedCell = [row, col];
-        } else {
-            this.sudoku.selectedCell = [row, col];
-        }
+        this.sudoku.selectedCell = [row, col];
         this.renderSudoku();
     }
 
